@@ -34,7 +34,7 @@ def check_update():
 def update_and_restart():
     try:
         print("正在下载更新")
-        new_code = requests.get(UPDATE_URL, timeout=10).text
+        new_code = requests.get(UPDATE_URL, timeout=15).text
         
         with open(__file__, "w", encoding="utf-8") as f:
             f.write(new_code)
