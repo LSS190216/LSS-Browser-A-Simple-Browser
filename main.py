@@ -11,9 +11,9 @@ from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineDownloadRequest
 import requests
 
 # ===================== 你只需要改这里 =====================
-VERSION_URL = "https://raw.githubusercontent.com/你的用户名/你的仓库/main/version.txt"
-UPDATE_URL = "https://raw.githubusercontent.com/你的用户名/你的仓库/main/main.py"
-LOCAL_VERSION = "100000" #100000表示1.0.0, 100302表示1.3.2, 101213表示1.12.13
+VERSION_URL = "https://raw.githubusercontent.com/LSS190216/LSS-Browser-A-Simple-Browser/refs/heads/main/version.txt"
+UPDATE_URL = "https://raw.githubusercontent.com/LSS190216/LSS-Browser-A-Simple-Browser/refs/heads/main/main.py"
+LOCAL_VERSION = "100001" #100000表示1.0.0, 100302表示1.3.2, 101213表示1.12.13
 # ======================================================
 
 def check_update():
@@ -225,10 +225,6 @@ class AcceleratedBrowser(QMainWindow):
         home = QAction("主页", self)
         home.triggered.connect(lambda: self.go_home())
         nav.addAction(home)
-
-        dnc = QAction("千万别点", self)
-        dnc.triggered.connect(lambda: self.tab_widget.currentWidget().setUrl(QUrl("https://www.bilibili.com/video/BV1GJ411x7h7/?spm_id_from=333.337.search-card.all.click")))
-        nav.addAction(dnc)
 
         new_tab = QAction("＋", self)
         new_tab.triggered.connect(self.add_new_tab)
