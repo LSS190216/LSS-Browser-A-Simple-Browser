@@ -12,7 +12,7 @@ import requests
 
 VERSION_URL = "https://raw.githubusercontent.com/LSS190216/LSS-Browser-A-Simple-Browser/refs/heads/main/version.txt"
 UPDATE_URL = "https://raw.githubusercontent.com/LSS190216/LSS-Browser-A-Simple-Browser/refs/heads/main/main.py"
-LOCAL_VERSION = "100003" #100000表示1.0.0, 100302表示1.3.2, 101213表示1.12.13
+LOCAL_VERSION = "100101" #100000表示1.0.0, 100302表示1.3.2, 101213表示1.12.13
 
 def check_update():
     try:
