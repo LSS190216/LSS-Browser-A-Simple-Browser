@@ -17,7 +17,7 @@ LOCAL_VERSION = "100003" #100000表示1.0.0, 100302表示1.3.2, 101213表示1.12
 def check_update():
     try:
         print("正在检查更新...")
-        r = requests.get(VERSION_URL, timeout=8)
+        r = requests.get(VERSION_URL, timeout=10)
         remote_version = r.text.strip()
         print(f"云端版本：{remote_version}，本地版本：{LOCAL_VERSION}")
         
@@ -32,7 +32,7 @@ def check_update():
 def update_and_restart():
     try:
         print("正在下载更新")
-        new_code = requests.get(UPDATE_URL, timeout=15).text
+        new_code = requests.get(UPDATE_URL, timeout=20).text
         
         with open(__file__, "w", encoding="utf-8") as f:
             f.write(new_code)
@@ -279,9 +279,6 @@ class AcceleratedBrowser(QMainWindow):
     # ===========================================================
 
 if __name__ == "__main__":
-    if check_update():
-        update_and_restart()
-    
     print(f"当前版本：{LOCAL_VERSION[0]}.{int(LOCAL_VERSION[2]+LOCAL_VERSION[3])}.{int(LOCAL_VERSION[4]+LOCAL_VERSION[5])}")
 
     if sys.platform == "win32":
@@ -290,4 +287,6 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = AcceleratedBrowser()
     win.show()
+    if check_update():
+        update_and_restart()
     sys.exit(app.exec())
