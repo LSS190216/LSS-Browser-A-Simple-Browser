@@ -17,7 +17,7 @@ LOCAL_VERSION = "100003" #100000表示1.0.0, 100302表示1.3.2, 101213表示1.12
 def check_update():
     try:
         print("正在检查更新...")
-        r = requests.get(VERSION_URL, timeout=5)
+        r = requests.get(VERSION_URL, timeout=8)
         remote_version = r.text.strip()
         print(f"云端版本：{remote_version}，本地版本：{LOCAL_VERSION}")
         
