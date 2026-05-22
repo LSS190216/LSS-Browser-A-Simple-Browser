@@ -13,7 +13,7 @@ import requests
 # ===================== 你只需要改这里 =====================
 VERSION_URL = "https://raw.githubusercontent.com/LSS190216/LSS-Browser-A-Simple-Browser/refs/heads/main/version.txt"
 UPDATE_URL = "https://raw.githubusercontent.com/LSS190216/LSS-Browser-A-Simple-Browser/refs/heads/main/main.py"
-LOCAL_VERSION = "100001" #100000表示1.0.0, 100302表示1.3.2, 101213表示1.12.13
+LOCAL_VERSION = "100002" #100000表示1.0.0, 100302表示1.3.2, 101213表示1.12.13
 # ======================================================
 
 def check_update():
@@ -27,8 +27,8 @@ def check_update():
             print("发现新版本！")
             return True
         return False
-    except:
-        print("检查更新失败")
+    except Exception as e:
+        print(f"检查更新失败:{e}")
         return False
 
 def update_and_restart():
