@@ -12,7 +12,7 @@ import requests
 
 VERSION_URL = "https://raw.githubusercontent.com/LSS190216/LSS-Browser-A-Simple-Browser/refs/heads/main/version.txt"
 UPDATE_URL = "https://raw.githubusercontent.com/LSS190216/LSS-Browser-A-Simple-Browser/refs/heads/main/main.py"
-LOCAL_VERSION = "100102" #100000表示1.0.0, 100302表示1.3.2, 101213表示1.12.13
+LOCAL_VERSION = "100103" #100000表示1.0.0, 100302表示1.3.2, 101213表示1.12.13
 
 def check_update():
     try:
@@ -20,7 +20,6 @@ def check_update():
         r = requests.get(VERSION_URL, timeout=10)
         remote_version = r.text.strip()
         print(f"云端版本：{remote_version}，本地版本：{LOCAL_VERSION}")
-        
         if int(remote_version) > int(LOCAL_VERSION):
             print("发现新版本！")
             return True
@@ -29,24 +28,20 @@ def check_update():
         print(f"检查更新失败:{e}")
         return False
 
-def update_and_restart():
+def update_file():
     try:
         print("正在下载更新")
         new_code = requests.get(UPDATE_URL, timeout=20).text
-        
-        with open(__file__, "w", encoding="utf-8") as f:
+        with open(__file__, "w", encoding="utf-8", newline="") as f:
             f.write(new_code)
-        
-        print("更新完成，正在重启...")
-        os.execv(sys.executable, [sys.executable] + [__file__])
+        print("更新成功！下次启动生效")
     except Exception as e:
         print(f"更新失败：{e}")
 
-# 新增更新线程类
 class UpdateThread(QThread):
     def run(self):
         if check_update():
-            update_and_restart()
+            update_file()
 
 # ------------------- 修复跳转的最小代码 -------------------
 class FixJumpPage(QWebEnginePage):
@@ -99,8 +94,6 @@ def check_connectivity(ip, port=443, timeout=2):
 def resolve_and_check_domain(host):
     if not host:
         return (False, "DNS 正在解析")
-    
-    # 第一步：DNS解析
     try:
         ans = dns_resolver.resolve(host, "A")
         ip = ans[0].address
@@ -112,8 +105,6 @@ def resolve_and_check_domain(host):
         return (False, "DNS ERROR:" + host + " 解析超时")
     except Exception as e:
         return (False, f"DNS ERROR:{host} | {str(e)[:20]}")
-    
-    # 第二步：网络连通性检测
     conn_success, conn_text = check_connectivity(ip)
     if conn_success:
         return (True, f"{dns_text} | {conn_text}")
@@ -129,21 +120,10 @@ class BrowserTab(QWebEngineView):
         self.loadFinished.connect(self.on_load_finish)
         self.urlChanged.connect(self.on_url_changed)
 
-    # ===================== 完善下载进度监控 =====================
     def on_download(self, download: QWebEngineDownloadRequest):
-        # 设置下载目录
         download.setDownloadDirectory(get_download_path())
-        # 绑定下载进度信号
-        download.receivedBytesChanged.connect(
-            lambda: self.parent_win.download_progress(
-                download.receivedBytes(), 
-                download.totalBytes()
-            )
-        )
-        
-        # 接受下载
+        download.receivedBytesChanged.connect(lambda: self.parent_win.download_progress(download.receivedBytes(), download.totalBytes()))
         download.accept()
-    # ===========================================================
 
     def on_url_changed(self, qurl):
         host = qurl.host()
@@ -155,35 +135,21 @@ class BrowserTab(QWebEngineView):
         host = QUrl(url).host()
         status, text = resolve_and_check_domain(host)
         self.parent_win.set_dns_text(text, status)
-
-        # 修复 AudioContext 报错
         if ok:
-            self.page().runJavaScript("""
-                document.addEventListener('click', () => {
-                    if (window.AudioContext) {
-                        let ctx = new AudioContext();
-                        ctx.resume();
-                    }
-                });
-            """)
+            self.page().runJavaScript("""document.addEventListener('click', () => {if (window.AudioContext) {let ctx = new AudioContext();ctx.resume();}});""")
 
 class AcceleratedBrowser(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("LSS浏览器")
         self.setGeometry(0, 0, 1200, 600)
-
-        # 标签页
         self.tab_widget = QTabWidget()
         self.tab_widget.setTabsClosable(True)
         self.tab_widget.tabCloseRequested.connect(self.close_tab)
         self.tab_widget.currentChanged.connect(self.tab_changed)
         self.setCentralWidget(self.tab_widget)
-
         self.create_nav_bar()
         self.create_status_bar()
-
-        # 初始主页
         self.add_new_tab(QUrl("https://www.baidu.com"), "主页")
 
     def add_new_tab(self, url=None, title="新标签页"):
@@ -213,31 +179,24 @@ class AcceleratedBrowser(QMainWindow):
     def create_nav_bar(self):
         nav = QToolBar()
         self.addToolBar(nav)
-
         back = QAction("←", self)
         back.triggered.connect(lambda: self.tab_widget.currentWidget().back())
         nav.addAction(back)
-
         forward = QAction("→", self)
         forward.triggered.connect(lambda: self.tab_widget.currentWidget().forward())
         nav.addAction(forward)
-
         refresh = QAction("重试", self)
         refresh.triggered.connect(lambda: self.tab_widget.currentWidget().reload())
         nav.addAction(refresh)
-
         home = QAction("主页", self)
         home.triggered.connect(lambda: self.go_home())
         nav.addAction(home)
-
         new_tab = QAction("＋", self)
         new_tab.triggered.connect(self.add_new_tab)
         nav.addAction(new_tab)
-
         self.url_bar = QLineEdit()
         self.url_bar.returnPressed.connect(self.go_url)
         nav.addWidget(self.url_bar)
-
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
         nav.addWidget(self.progress_bar)
@@ -248,11 +207,9 @@ class AcceleratedBrowser(QMainWindow):
             url = "https://" + url
         self.tab_widget.currentWidget().setUrl(QUrl(url))
 
-    # ===================== 修复主页按钮同步更新 =====================
     def go_home(self):
         self.url_bar.setText("https://www.baidu.com")
         self.tab_widget.currentWidget().setUrl(QUrl("https://www.baidu.com"))
-    # ===============================================================
 
     def url_changed(self, q):
         self.url_bar.setText(q.toString())
@@ -270,30 +227,24 @@ class AcceleratedBrowser(QMainWindow):
         else:
             self.dns_label.setStyleSheet("color:#cc0000;font-weight:bold")
 
-    # ===================== 完善下载进度显示 =====================
     def download_progress(self, recv, total):
         if total > 0:
             per = int(recv / total * 100)
             if per >= 100:
-                # 下载完成 → 绿色文字
                 self.down_label.setText("<font color='green'>下载完成</font>")
                 QTimer.singleShot(5000, lambda: self.down_label.setText(""))
             else:
                 self.down_label.setText(f"下载中：{per}%")
         elif recv > 0 and total == 0:
             self.down_label.setText(f"下载中：已接收 {recv/1024/1024:.2f}MB")
-    # ===========================================================
 
 if __name__ == "__main__":
     print(f"当前版本：{LOCAL_VERSION[0]}.{int(LOCAL_VERSION[2]+LOCAL_VERSION[3])}.{int(LOCAL_VERSION[4]+LOCAL_VERSION[5])}")
-
     if sys.platform == "win32":
         os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--autoplay-policy=no-user-gesture-required"
-
     app = QApplication(sys.argv)
     win = AcceleratedBrowser()
     win.show()
-    # 启动更新线程，避免堵塞主进程
     update_thread = UpdateThread()
     update_thread.start()
     sys.exit(app.exec())
