@@ -12,7 +12,7 @@ import requests
 
 VERSION_URL = "https://raw.githubusercontent.com/LSS190216/LSS-Browser-A-Simple-Browser/refs/heads/main/version.txt"
 UPDATE_URL = "https://raw.githubusercontent.com/LSS190216/LSS-Browser-A-Simple-Browser/refs/heads/main/main.py"
-LOCAL_VERSION = "100101" #100000表示1.0.0, 100302表示1.3.2, 101213表示1.12.13
+LOCAL_VERSION = "100102" #100000表示1.0.0, 100302表示1.3.2, 101213表示1.12.13
 
 def check_update():
     try:
@@ -41,6 +41,12 @@ def update_and_restart():
         os.execv(sys.executable, [sys.executable] + [__file__])
     except Exception as e:
         print(f"更新失败：{e}")
+
+# 新增更新线程类
+class UpdateThread(QThread):
+    def run(self):
+        if check_update():
+            update_and_restart()
 
 # ------------------- 修复跳转的最小代码 -------------------
 class FixJumpPage(QWebEnginePage):
@@ -287,6 +293,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = AcceleratedBrowser()
     win.show()
-    if check_update():
-        update_and_restart()
+    # 启动更新线程，避免堵塞主进程
+    update_thread = UpdateThread()
+    update_thread.start()
     sys.exit(app.exec())
